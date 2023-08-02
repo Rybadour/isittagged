@@ -55,6 +55,18 @@ const isHidden = element => {
 };
 
 /***********************/
+/**
+ * TODO:
+ * - Listen for changes to content and to dynamically apply these flag to tagged elements.
+ * - Add a hover effect so hovering a button highlights and elevates the flag it's associated to.
+ * - Add an option in the popup to hide flags until highlighted.
+ */
+
+
+/***********************/
+const flagContainer = document.createElement('div');
+flagContainer.style = 'position: absolute; top: 0; left: 0; width: 100dvw; height: 100dvw; z-index: 99999; pointer-events: none;'
+document.body.appendChild(flagContainer);
 
 // Handler for when the current selector changes in storage
 chrome.storage.onChanged.addListener(function(changes, namespace) {
@@ -104,13 +116,17 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
             // Styling for the tag
             // Add as a string instead of individually
             let tag = getTag(currentSelector);
-            let styles =
-              "color:red; position: absolute; background-color: lemonchiffon; visibility: visible; z-index: 9999999";
             if (tag) {
-              el.insertAdjacentHTML(
-                "beforeend",
-                `<div class="tagflag" style="${styles}">${tag}</div>`
-              );
+              const elementBounds = el.getBoundingClientRect();
+              let styles =
+                "color:red; position: absolute; background-color: lemonchiffon; visibility: visible;";
+              styles += `top: ${elementBounds.top + elementBounds.height + 5}px; `;
+              styles += `left: ${elementBounds.left}px; `;
+              const flag = document.createElement('div');
+              flag.style = styles;
+              flag.classList.add('tagFlag')
+              flag.innerText = tag;
+              flagContainer.appendChild(flag);
             }
           }
         }
@@ -123,13 +139,13 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
 
       if (!showTags) {
         if (numOfElements > 0) {
-          for (el of taggedElements) {
+          for (let el of taggedElements) {
             // hide styles
             removeBorder(el);
-            // remove tag flag
-            for (el of document.querySelectorAll(".tagflag")) {
-              el.parentNode.removeChild(el);
-            }
+          }
+          // remove tag flag
+          for (let flag of document.querySelectorAll(".tagFlag")) {
+            flagContainer.removeChild(flag);
           }
           // change button text to 'show Tags'
           let showMessage = {
