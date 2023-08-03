@@ -60,6 +60,7 @@ const isHidden = element => {
  * - Listen for changes to content and to dynamically apply these flag to tagged elements.
  * - Add a hover effect so hovering a button highlights and elevates the flag it's associated to.
  * - Add an option in the popup to hide flags until highlighted.
+ * - Update position based on scroll position
  */
 
 
@@ -67,6 +68,8 @@ const isHidden = element => {
 const flagContainer = document.createElement('div');
 flagContainer.style = 'position: absolute; top: 0; left: 0; width: 100dvw; height: 100dvw; z-index: 99999; pointer-events: none;'
 document.body.appendChild(flagContainer);
+
+const hoverHandles = [];
 
 // Handler for when the current selector changes in storage
 chrome.storage.onChanged.addListener(function(changes, namespace) {
@@ -113,8 +116,6 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
 
             applyBorder(el);
 
-            // Styling for the tag
-            // Add as a string instead of individually
             let tag = getTag(currentSelector);
             if (tag) {
               const elementBounds = el.getBoundingClientRect();
@@ -127,6 +128,22 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
               flag.classList.add('tagFlag')
               flag.innerText = tag;
               flagContainer.appendChild(flag);
+
+              const enterHandle = () => {
+                flag.style.setProperty('z-index', 1);
+              };
+              const exitHandle = () => {
+                flag.style.removeProperty('z-index');
+              };
+              el.addEventListener('mouseenter', enterHandle);
+              el.addEventListener('mouseleave', exitHandle);
+
+              hoverHandles.push({
+                tag: el,
+                flag: flag,
+                enterHandle,
+                exitHandle,
+              })
             }
           }
         }
