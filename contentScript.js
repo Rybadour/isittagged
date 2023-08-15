@@ -65,6 +65,10 @@ const isHidden = element => {
 
 /***********************/
 
+const flagContainer = document.createElement('div');
+flagContainer.style = 'position: absolute; top: 0; left: 0; width: 100dvw; height: 100dvw; z-index: 99999; pointer-events: none;'
+document.body.appendChild(flagContainer);
+
 const DEFAULT_Z_INDEX = 1;
 const HIGHLIGHT_Z_INDEX = 999;
 
@@ -118,19 +122,25 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
 
             let tag = getTag(currentSelector);
             if (tag) {
+              const elementBounds = el.getBoundingClientRect();
+              let styles =
+                "color:red; position: absolute; background-color: lemonchiffon; visibility: visible; padding: 0 3px;";
+              styles += `top: ${elementBounds.top + elementBounds.height + 5 + window.scrollY}px; `;
+              styles += `left: ${elementBounds.left}px; `;
+              
               const flag = document.createElement('div');
-              flag.classList.add('tagFlag');
-              flag.style =  "margin-top: 10px; color:red; font-weight: bold; position: absolute; visibility: visible; z-index: " + DEFAULT_Z_INDEX;
-              flag.innerHTML = `<div style="position: fixed; background-color: lemonchiffon; padding: 0 3px;">${tag}</div>`;
-              el.insertAdjacentElement("beforeend", flag);
+              flag.style = styles;
+              flag.classList.add('tagFlag')
+              flag.innerText = tag;
+              flagContainer.appendChild(flag);
 
               const enterHandle = () => {
                 flag.style.setProperty('z-index', HIGHLIGHT_Z_INDEX);
-                flag.children[0].style.setProperty('border', "2px solid red");
+                flag.style.setProperty('border', "2px solid red");
               };
               const exitHandle = () => {
                 flag.style.setProperty('z-index', DEFAULT_Z_INDEX);
-                flag.children[0].style.removeProperty('border');
+                flag.style.removeProperty('border');
               };
               el.addEventListener('pointerenter', enterHandle);
               el.addEventListener('pointerleave', exitHandle);
@@ -153,12 +163,12 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
 
       if (!showTags) {
         if (numOfElements > 0) {
-          for (el of taggedElements) {
+          for (let el of taggedElements) {
             // hide styles
             removeBorder(el);
             // remove tag flag
-            for (el of document.querySelectorAll(".tagFlag")) {
-              el.parentNode.removeChild(el);
+            for (let flag of document.querySelectorAll(".tagFlag")) {
+              flagContainer.removeChild(flag);
             }
           }
           // change button text to 'show Tags'
